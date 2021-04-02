@@ -69,10 +69,6 @@ def docfdis(invoiceid=int(invoiceid_arg)):
         invoices = models.execute_kw(db, uid, password, 'account.move', 'search_read', domain,
                                       {'fields': ['id', 'name', 'partner_id', 'l10n_mx_edi_usage',
                                                   'attachment_ids', 'edi_document_ids']})
-
-        attcflds = models.execute_kw( db, uid, password, 'ir.attachment', 'fields_get', [])
-        ediflds = models.execute_kw( db, uid, password, 'account.edi.document', 'fields_get', [])
-
         fnstocall = ['action_post', 'action_process_edi_web_services']
         for inv in invoices:
             #primero valido que tenga error el timrado y confirmo la factura y genero con el error del CFDI
@@ -100,18 +96,6 @@ def docfdis(invoiceid=int(invoiceid_arg)):
             savecfdi(inv['id'], cfdifile)
             print("ID: {}. NUMERO: {}. ID CLIENTE: {}".format(inv['id'], inv['name'], inv['partner_id']))
             print("Attachments")
-            for att in inv['attachment_ids']:
-                domain = [[['id', '=', att]]]
-                docto = models.execute_kw(db, uid, password, 'ir.attachment', 'search_read', domain,
-                                          {'fields': [x for x in attcflds.keys()]})
-                print(docto)
-
-            print("Edis")
-            for edi in inv['edi_document_ids']:
-                domain = [[['id', '=', edi]]]
-                docto = models.execute_kw(db, uid, password, 'account.edi.document', 'search_read', domain,
-                                          {'fields': [x for x in ediflds.keys()]})
-                print(docto)
 
     except Exception as err:
         print(repr(err))
