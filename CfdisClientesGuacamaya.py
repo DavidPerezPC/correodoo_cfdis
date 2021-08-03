@@ -14,8 +14,8 @@ from datetime import timedelta as td
 from datetime import datetime as dt
 
 
-url = 'https://grupoley-paralelo-2630664.dev.odoo.com'
-db = 'grupoley-paralelo-2630664'
+url = 'https://grupoley.odoo.com'
+db = 'grupoley-ley-1910338'
 username = 'grupoley@tecnika.com.mx'
 password = '1234%&'
 common = xc.ServerProxy('{}/xmlrpc/2/common'.format(url))
@@ -95,17 +95,17 @@ def savecfdi(move_id, xmlcfdi, date_doc, date_due):
 def doparalelo():
 
     try:
-        domain = [[['type', '=', 'sale'], ['id', 'not in', [45]]]]
+        domain = [[['type', '=', 'sale']]]
         journals = models.execute_kw(db, uid, password, 'account.journal', 'search_read', domain,
                                      {'order': 'id', 'fields': ['id', 'name']})
-        #directorio = "cfdis/GUACAMAYA/PARALELO/"  PARTE 1
-        directorio = "cfdis/GUACAMAYA/PARTE2/"  #PARTE 2
+
+        directorio = "/Users/turbo/Downloads/GUACAMAYA/FACTURAS_ALL/"
 
         for journal in journals:
             domain = [[['journal_id', '=', journal['id']],
                        ['move_type', '=', 'out_invoice'],
                        ['state', '=', 'draft'],
-                       ['invoice_date', '<=', '2021-05-31'],
+                       ['invoice_date', '<=', '2021-07-31'],
                        ]]
             invoices = models.execute_kw(db, uid, password, 'account.move', 'search_read', domain,
                                          {'fields': ['id', 'name', 'partner_id', 'l10n_mx_edi_usage',
@@ -139,10 +139,11 @@ def doparalelo():
                 #guardo la fechas de factura, porque al confirmar se alteran
                 invoice_date = inv['invoice_date']
                 invoice_date_due = inv['invoice_date_due']
+                edi_usage = inv['l10n_mx_edi_usage']
 
                 #valido que tenga error el timbrado y confirmo la factura y genero con el error del CFDI
                 dicttoupdate = {}
-                if inv['l10n_mx_edi_usage'] or filenotfound:
+                if edi_usage or filenotfound:
                     dicttoupdate = {'l10n_mx_edi_usage': False}
                     dicttoupdate.update({'name': payment_reference})
 
@@ -159,6 +160,10 @@ def doparalelo():
                 try:
                     if not filenotfound:
                         savecfdi(inv['id'], xmlfile, invoice_date, invoice_date_due)
+                    if edi_usage:
+                        dicttoupdate = {'l10n_mx_edi_usage': edi_usage}
+                        models.execute_kw(db, uid, password, 'account.move', 'write',
+                                     [[inv['id']], dicttoupdate])
                     print("procesada")
                 except Exception as err:
                     print("Error: {}".format(repr(err)))

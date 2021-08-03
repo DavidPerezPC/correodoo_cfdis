@@ -17,10 +17,10 @@ from datetime import datetime as dt
 # def get_conexion(host='192.168.0.14', port=5432, dbname='GMM', user= 'openerp', password='0p3n3rp'):
 # 	return psql.connect("host='%s' port=%s dbname='%s' user='%s' password='%s'" % (host, port, dbname, user, password))
 
-#url = 'http://localhost:8069'
-#db = 'vedra'
-url = 'https://quinval.odoo.com'
+url = 'http://localhost:8069'
 db = 'quinval'
+# url = 'https://quinval.odoo.com'
+# db = 'quinval'
 username = 'quinval@quinval.com'
 password = 'SAQ14122'
 # url = 'https://siam.odoo.com'
@@ -381,7 +381,7 @@ def docfdisprod(move_type=move_type_arg, excel_file=excel_file_arg, sheet_name=s
 
 def deleteborrado():
 
-    invoice_id = [2904]
+    invoice_id = [1369, 1947, 1946, 1945, 1944, 1943, 1942, 1941]
     #[2410, 2430]
     #[2092]
     #[4069]
@@ -611,8 +611,8 @@ def cfdis_update(move_type=move_type_arg, excel_file=excel_file_arg, sheet_name=
 
 
 if __name__ == "__main__":
-    docfdis()
+    #docfdis()
     #docfdisprod()
     #cfdis_usd()
-    #deleteborrado()
+    deleteborrado()
     #cfdis_update()
