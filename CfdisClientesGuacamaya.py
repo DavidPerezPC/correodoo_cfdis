@@ -14,10 +14,14 @@ from datetime import timedelta as td
 from datetime import datetime as dt
 
 
-url = 'https://grupoley.odoo.com'
-db = 'grupoley-ley-1910338'
-username = 'grupoley@tecnika.com.mx'
-password = '1234%&'
+# url = 'https://grupoley.odoo.com'
+# db = 'grupoley-ley-1910338'
+# username = 'grupoley@tecnika.com.mx'
+# password = '1234%&'
+url = 'https://25.0.189.81:4344'
+db = 'odoo'
+username = 'desarrollo@gasomarshal.mx'
+password = 'Lynx2021.'
 common = xc.ServerProxy('{}/xmlrpc/2/common'.format(url))
 uid = common.authenticate(db, username, password, {})
 models = xc.ServerProxy('{}/xmlrpc/2/object'.format(url))
@@ -238,6 +242,65 @@ def docfdis(move_type=move_type_arg, excel_file=excel_file_arg, sheet_name=sheet
 
     return
 
+def deletecfdi():
+
+    invoice_id = [31035]
+    domain = domain = [[['id', 'in', invoice_id]]]
+    invoices = models.execute_kw(db, uid, password, 'account.move', 'search_read', domain,
+                                   {'fields': ['id', 'name', 'partner_id', 'l10n_mx_edi_usage',
+                                          'attachment_ids', 'edi_document_ids',
+                                         'payment_reference', 'state', 'ref']})
+
+    for inv in invoices:
+        for att in inv['edi_document_ids']:
+            models.execute_kw(db, uid, password, 'account.edi.document', 'unlink', [att])
+
+        for att in inv['attachment_ids']:
+            models.execute_kw(db, uid, password, 'ir.attachment', 'unlink', [att])
+
+def loadcfdi_payment(move_id=move_type_arg, xmlcfdi=excel_file_arg):
+
+    contentraw = open(xmlcfdi).read()
+    content = contentraw.encode('UTF-8')    
+    xmlcfdicontent = ET.fromstring(content)
+    serie = ''
+    if 'Serie' in xmlcfdicontent.attrib.keys():
+        serie = xmlcfdicontent.attrib['Serie'] + '-'
+    elif 'serie' in xmlcfdicontent.attrib.keys():
+        serie = xmlcfdicontent.attrib['serie'] + '-'
+
+    folio = '0000'
+    if 'Folio' in xmlcfdicontent.attrib.keys():
+        folio = xmlcfdicontent.attrib['Folio']
+    elif 'folio' in xmlcfdicontent.attrib.keys():
+        folio = xmlcfdicontent.attrib['folio']
+    sinvoice = serie + folio
+
+    #si sinvoice es diferente del payment_referece, eso quiere decir que el docto esta mal relacionado
+    data = {
+        'name':  "{}.xml".format(sinvoice),
+        'res_name': sinvoice,
+        'description': "Mexican invoice CFDI generated for the {} payment document.".format(sinvoice),
+        'type': 'binary',
+        'res_id': move_id,
+        'res_model': 'account.move',
+        'raw': contentraw,
+        'mimetype': 'application/xml',
+        'company_id': 1,
+    }
+    cfdi = models.execute_kw(db, uid, password, 'ir.attachment', 'create', [data])
+    data = {
+        'move_id': move_id,
+        'attachment_id': cfdi,
+        'state': 'to_send',
+        'edi_format_id': CFDIFORMAT,
+        'error': False,
+    }
+    cfdi = models.execute_kw(db, uid, password, 'account.edi.document', 'create', [data])
+
+    return True
 
 if __name__ == "__main__":
-    doparalelo()
+    #doparalelo()
+    #deletecfdi()
+    loadcfdi_payment()
